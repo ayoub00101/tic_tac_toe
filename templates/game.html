@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .grid {
+            border-collapse: collapse;
+        }
+        .grid td {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #333;
+            text-align: center;
+            font-size: 100px;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease;
+        }
+        .grid td:hover {
+            background-color: #e0e0e0;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .new-game {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .new-game:hover {
+            background-color: #0056b3;
+        }
+        #tour{
+            margin: 10px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ player1 }} VS {{ player2 }}</h1>
+    <table class="grid">
+        <tr>
+            <td id="0"></td>
+            <td id="1"></td>
+            <td id="2"></td>
+        </tr>
+        <tr>
+            <td id="3"></td>
+            <td id="4"></td>
+            <td id="5"></td>
+        </tr>
+        <tr>
+            <td id="6"></td>
+            <td id="7"></td>
+            <td id="8"></td>
+        </tr>        
+    </table>
+    <div id="tour"></div>
+    <div id="result"></div>
+    <button class="new-game" id="new-game-button">Nouvelle Partie</button>
+    <script>
+        $(document).ready(() => { 
+            var socket = io();
+            var urlParams = new URLSearchParams(window.location.search);
+            var player1 = urlParams.get('player1');
+            var player2 = urlParams.get('player2');
+            var game_id = urlParams.get('game_id');
+            var play;
+            var actual_player;
+            var game_over = false;
+
+            socket.emit("ready_to_play", {game_id: game_id});
+
+            socket.on("handle_players", function(data) {
+                console.log("HANDLE");
+                play = data["play"];
+                actual_player = data["actual_player"];
+                console.log(actual_player,"peut jouer :", play);
+                if (play){
+                    $("#tour").text("A votre tour")
+                }else{
+                    $("#tour").text("A tour de l'adversaire")
+                }
+            });
+
+            socket.on("update_grid", function(data) {
+                var sign = (actual_player == player1) ? ["O", "#ff4d4d"] : ["X", "#4d79ff"];
+                $(`#${data["td_id"]}`).text(sign[0]);
+                $(`#${data["td_id"]}`).css("color", sign[1]);
+            });
+
+            socket.on("game_over", function(data) {
+                $("#tour").text("")
+                var result = data["result"];
+                var resultText;
+                if (result == "win") {
+                    resultText = "Vous avez gagné";
+                } else if (result == "lose") {
+                    resultText = "Vous avez perdu";
+                } else {
+                    resultText = "Match nul";
+                }
+                $("#result").text(resultText);
+                game_over = true;
+                $("#new-game-button").text(resultText + " - Nouvelle Partie");
+                $("#new-game-button").show();
+            });
+
+            $("td").click(function() {
+                if (play && $(this).text() == "" && !game_over) {
+                    console.log(actual_player);
+                    socket.emit("play", {game_id: game_id, td_id: $(this).attr('id')});
+                    var sign = (actual_player == player2) ? ["O", "#ff4d4d"] : ["X", "#4d79ff"];
+                    $(this).text(sign[0]);
+                    $(this).css("color", sign[1]);
+                }
+            });
+
+            $("#new-game-button").click(function() {
+                socket.emit("replay")
+            });
+
+            socket.on("redirect", function(data) {
+                console.log(data.url)
+                console.log(data.username)
+                window.location.href = data.url+"?username="+data.username
+            });
+        });
+    </script>
+</body>
+</html>

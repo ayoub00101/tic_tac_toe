@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        #info {
+            padding: 20px 40px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        #info:hover {
+            transform: scale(1.05);
+        }
+    </style>
+    <script>
+        $(document).ready(() => {
+            var socket = io();
+    
+            socket.on("wait_players", function() {
+                $("#info").text("En attente de joueurs...");
+            });
+    
+            socket.on("start_game", function(data) {
+                $("#info").text("Déplacement dans la partie...");
+                setTimeout(() => {
+                    window.location.href = `/game?game_id=${data.game_id}&player1=${data.players[0]}&player2=${data.players[1]}`;
+                }, 2000);
+            });
+
+            socket.on("redirect", function(data) {
+                window.location.href = data.url;
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1 id="info">En attente de joueurs...</h1>
+</body>
+</html>
