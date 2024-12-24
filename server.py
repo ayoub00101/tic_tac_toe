@@ -73,11 +73,11 @@ def handle_disconnect():
     print("verif disconnect:", username)
     if username:
         print(username, "is disconnected.")
-        if username in users and not users[username].get("redirected", False):
-            del users[username]
-        elif username in waiting_room and users[username]["replay"] == False:
+        if username in waiting_room:
             print('NON FRERO DSL')
             waiting_room.remove(username)
+        if username in users and not users[username].get("redirected", False):
+            del users[username]
     else:
         print("A user disconnected without a session.")
 
@@ -175,9 +175,6 @@ def add_waiting_room():
     print("USERS:",users)
     socketio.emit("redirect", {"url": flask.url_for("new_user"),"username":username}, room=users[username]["sid"])
 
-@socketio.on("disconnect_replay")
-def disconnect_replay():
-    pass
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))  # Utilise la variable d'environnement PORT, sinon 5000 par défaut
