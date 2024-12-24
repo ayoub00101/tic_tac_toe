@@ -2,6 +2,7 @@ import flask
 import flask_socketio as fs
 import uuid
 import random
+import os
 app = flask.Flask(__name__)
 app.secret_key = str(uuid.uuid4())
 socketio = fs.SocketIO(app)
