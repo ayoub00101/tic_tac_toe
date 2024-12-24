@@ -179,5 +179,7 @@ def disconnect_replay():
     pass
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Utilise la variable d'environnement PORT, sinon 5000 par défaut
+    socketio.run(app, host="0.0.0.0", port=port, debug=True)
+
 
